@@ -63,7 +63,7 @@ class TwinDragonPrintRestore(octoprint.plugin.StartupPlugin,
 							octoprint.plugin.AssetPlugin,
 							octoprint.plugin.TemplatePlugin,
 							octoprint.plugin.BlueprintPlugin):
-	"""OctoPrint print restore plugin for Fracktal Works 3D printers."""
+	"""OctoPrint print restore plugin for TwinDragon."""
 
 	# region "Plugin settings"
 	@property
@@ -698,7 +698,7 @@ class TwinDragonPrintRestore(octoprint.plugin.StartupPlugin,
 # endregion
 
 
-__plugin_name__ = "Julia Print Restore"
+__plugin_name__ = "TwinDragon Print Restore"
 __plugin_version__ = __version__
 __plugin_pythoncompat__ = ">=2.7,<4"
 
