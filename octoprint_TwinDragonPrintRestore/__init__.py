@@ -117,6 +117,14 @@ class TwinDragonPrintRestore(octoprint.plugin.StartupPlugin,
 		self.state_position = {}
 		self.state_babystep = 0
 		self._timer_printer_state_monitor.start()
+		data = self._printer.get_current_data()
+		self.file_being_recorded = data["job"]["file"]["name"]
+		self._logger.info("File being recorded: " + self.file_being_recorded)
+		if self.file_restored is None or self.file_being_recorded != self.file_restored: # no file was restored, on starting the print, or a new file other than what was previously restored was started
+			self._logger.info("File being recorded is different from restored file, or no file was restored. Resetting IDEX flag to False")
+			self.file_restored = self.file_being_recorded
+			self.IDEX_enabled = False
+			self.state_IDEX = 1
 
 	def stop_printer_state_monitor(self):
 		"""Stop monitoring and saving printer state."""
@@ -142,6 +150,7 @@ class TwinDragonPrintRestore(octoprint.plugin.StartupPlugin,
 		if self.flag_restore_in_progress or self.flag_restore_file_write_in_progress:
 			return
 		try:
+
 			temps = self._printer.get_current_temperatures()
 			file = self._printer.get_current_data()
 			data = {"fileName": file["job"]["file"]["name"],
@@ -152,6 +161,7 @@ class TwinDragonPrintRestore(octoprint.plugin.StartupPlugin,
 					"position": self.state_position,
 					"babystep": self.state_babystep if self.enableBabystep else 0
 					}
+
 			if "tool1" in temps.keys():
 				if temps["tool1"]["target"] is not None:
 					data["tool1Target"] = temps["tool1"]["target"]
@@ -339,8 +349,8 @@ class TwinDragonPrintRestore(octoprint.plugin.StartupPlugin,
 						self._printer.commands("M106 S{}".format(int(data["position"]["FAN"])))
 
 				if "IDEX" in data.keys():
-					self.IDEX_enabled = True
-					self.state_IDEX = data["IDEX"]
+					self.IDEX_enabled = True		  #set it again to save in in subsequent saves of this file
+					self.state_IDEX = data["IDEX"]    #set it again to save in in subsequent saves of this file
 					if data["IDEX"] == 1 or data["IDEX"] == 0:
 						commands = ["M605 S1",
 									"T{}".format(int(data["position"]["T"])),
@@ -411,6 +421,7 @@ class TwinDragonPrintRestore(octoprint.plugin.StartupPlugin,
 
 				self._printer.select_file(path=self._file_manager.path_on_disk("local", data["fileName"]),
 										  sd=False, printAfterSelect=True, pos=int(data["filePos"]))
+				self.file_restored = data["fileName"]
 
 				self._printer.commands("M117 RESTORE_COMPLETE")
 
@@ -538,6 +549,8 @@ class TwinDragonPrintRestore(octoprint.plugin.StartupPlugin,
 		self.state_babystep = 0
 		self.flag_is_saving_state = False
 		self.flag_restore_in_progress = False
+		self.file_restored = None
+		self.file_being_recorded = None
 
 	def on_after_startup(self):
 		"""Called just after launch of the server.
