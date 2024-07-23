@@ -115,8 +115,6 @@ class TwinDragonPrintRestore(octoprint.plugin.StartupPlugin,
 		self.flag_is_saving_state = True
 		self.flag_restore_file_write_in_progress = False
 		self.state_position = {}
-		self.state_IDEX = 1
-		self.IDEX_enabled = False
 		self.state_babystep = 0
 		self._timer_printer_state_monitor.start()
 
@@ -299,10 +297,10 @@ class TwinDragonPrintRestore(octoprint.plugin.StartupPlugin,
 					self._printer.commands("M140 S{}".format(float(data["bedTarget"])))
 				if "tool0Target" in data.keys():
 					if float(data["tool0Target"]) > 0:
-						self._printer.commands("M104 T0 S140".format(float(data["tool0Target"])))
+						self._printer.commands("M104 T0 S150".format(float(data["tool0Target"])))
 				if "tool1Target" in data.keys():
 					if float(data["tool1Target"]) > 0:
-						self._printer.commands("M104 T1 S140".format(float(data["tool1Target"])))
+						self._printer.commands("M104 T1 S150".format(float(data["tool1Target"])))
 				if "tool0Target" in data.keys():
 					if float(data["tool0Target"]) > 0:
 						self._printer.commands(
@@ -333,8 +331,6 @@ class TwinDragonPrintRestore(octoprint.plugin.StartupPlugin,
 					if float(data["tool1Target"]) > 0:
 						self._printer.commands("M109 T1 S{}".format(float(data["tool1Target"])))
 
-				self._printer.commands("G1 X10 Y10 F2000")
-				# self._printer.commands("G1 X0 Y0 Z10 F9000")
 				if "T" not in data["position"].keys():
 					data["position"]["T"] = 0
 
@@ -343,6 +339,8 @@ class TwinDragonPrintRestore(octoprint.plugin.StartupPlugin,
 						self._printer.commands("M106 S{}".format(int(data["position"]["FAN"])))
 
 				if "IDEX" in data.keys():
+					self.IDEX_enabled = True
+					self.state_IDEX = data["IDEX"]
 					if data["IDEX"] == 1 or data["IDEX"] == 0:
 						commands = ["M605 S1",
 									"T{}".format(int(data["position"]["T"])),
@@ -356,7 +354,7 @@ class TwinDragonPrintRestore(octoprint.plugin.StartupPlugin,
 									"M420 S1",
 									"G1 X{} Y{} F5000".format(float(data["position"]["X"]),
 															  float(data["position"]["Y"])),
-									"G1 Z{} F4000".format(float(data["position"]["Z"]) - 2),
+									"G1 Z{} F4000".format(float(data["position"]["Z"])),
 									"G91",
 									"G1 E0.5 F200",
 									"G90",
@@ -377,7 +375,7 @@ class TwinDragonPrintRestore(octoprint.plugin.StartupPlugin,
 									"G90",
 									"G1 X{} Y{} F5000".format(float(data["position"]["X"]),
 															  float(data["position"]["Y"])),
-									"G1 Z{} F4000".format(float(data["position"]["Z"]) - 2),
+									"G1 Z{} F4000".format(float(data["position"]["Z"])),
 									"G91",
 									"G1 E0.5 F200",
 									"G90",
@@ -396,9 +394,9 @@ class TwinDragonPrintRestore(octoprint.plugin.StartupPlugin,
 								"M420 S1",
 								"G1 X{} Y{} F9000".format(float(data["position"]["X"]),
 														  float(data["position"]["Y"])),
-								"G1 Z{} F4000".format(float(data["position"]["Z"]) - 2),
+								"G1 Z{} F4000".format(float(data["position"]["Z"])),
 								"G91",
-								"G1 E0.5 F200",
+								"G1 E0.5 F400",
 								"G90",
 								"G92 E{}".format(float(data["position"]["E"])),
 								"G1 F{}".format(float(data["position"]["F"]))
@@ -409,6 +407,7 @@ class TwinDragonPrintRestore(octoprint.plugin.StartupPlugin,
 				if "babystep" in data.keys():
 					if float(data["babystep"]) != 0:
 						self._printer.commands("M290 Z{}".format(float(data["babystep"])))
+						self.state_babystep = float(data["babystep"])
 
 				self._printer.select_file(path=self._file_manager.path_on_disk("local", data["fileName"]),
 										  sd=False, printAfterSelect=True, pos=int(data["filePos"]))
