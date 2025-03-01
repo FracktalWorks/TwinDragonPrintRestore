@@ -346,7 +346,7 @@ class TwinDragonPrintRestore(octoprint.plugin.StartupPlugin,
 
 				if "FAN" in data["position"].keys():
 					if int(data["position"]["FAN"]) > 0:
-						self._printer.commands("M106 S{}".format(int(data["position"]["FAN"])))
+						self._printer.commands("M106 S{}".format(float(data["position"]["FAN"])))
 
 				if "IDEX" in data.keys():
 					self.IDEX_enabled = True		  #set it again to save in in subsequent saves of this file
