@@ -301,132 +301,135 @@ class TwinDragonPrintRestore(octoprint.plugin.StartupPlugin,
 			if data["fileName"] != "None":  # file name is not none
 				self._printer.commands("M117 RESTORE_STARTED")
 
-				# start heating to prepare for initial move
+				# Perform homing before any other moves
+				self._printer.commands("G28")  # Home all axes
 
+				# Start heating to prepare for initial move
 				if float(data["bedTarget"]) > 0:
-					self._printer.commands("M140 S{}".format(float(data["bedTarget"])))
-				if "tool0Target" in data.keys():
+					self._printer.commands(f"M140 S{float(data['bedTarget'])}")
+				if "tool0Target" in data.keys() and data["tool0Target"] is not None:
 					if float(data["tool0Target"]) > 0:
-						self._printer.commands("M104 T0 S150".format(float(data["tool0Target"])))
-				if "tool1Target" in data.keys():
+						self._printer.commands("M104 T0 S150")
+				if "tool1Target" in data.keys() and data["tool1Target"] is not None:
 					if float(data["tool1Target"]) > 0:
-						self._printer.commands("M104 T1 S150".format(float(data["tool1Target"])))
-				if "tool0Target" in data.keys():
-					if float(data["tool0Target"]) > 0:
-						self._printer.commands(
-							"M109 T0 S150")  # just enough heat to remove nozzle without disloging print
-				if "tool1Target" in data.keys():
-					if float(data["tool1Target"]) > 0:
-						self._printer.commands(
-							"M109 T1 S150")  # just enough heat to remove nozzle without disloging print
-				# Move the print head
+						self._printer.commands("M104 T1 S150")
+
+					# Remove redundant homing commands
+					# Move the print head only after the initial homing
 				self._printer.commands("T0")
-				self._printer.home("z")
-				self._printer.home(["x", "y"])
+				# self._printer.home("z")
+				# self._printer.home(["x", "y"])
 
 				# Set to actual heating temperatures
-
-				if "tool0Target" in data.keys():
+				if "tool0Target" in data.keys() and data["tool0Target"] is not None:
 					if float(data["tool0Target"]) > 0:
-						self._printer.commands("M104 T0 S{}".format(float(data["tool0Target"])))
-				if "tool1Target" in data.keys():
+						self._printer.commands(f"M104 T0 S{float(data['tool0Target'])}")
+				if "tool1Target" in data.keys() and data["tool1Target"] is not None:
 					if float(data["tool1Target"]) > 0:
-						self._printer.commands("M104 T1 S{}".format(float(data["tool1Target"])))
+						self._printer.commands(f"M104 T1 S{float(data['tool1Target'])}")
 				if float(data["bedTarget"]) > 0:
-					self._printer.commands("M190 S{}".format(float(data["bedTarget"])))
-				if "tool0Target" in data.keys():
+					self._printer.commands(f"M190 S{float(data['bedTarget'])}")
+				if "tool0Target" in data.keys() and data["tool0Target"] is not None:
 					if float(data["tool0Target"]) > 0:
-						self._printer.commands("M109 T0 S{}".format(float(data["tool0Target"])))
-				if "tool1Target" in data.keys():
+						self._printer.commands(f"M109 T0 S{float(data['tool0Target'])}")
+				if "tool1Target" in data.keys() and data["tool1Target"] is not None:
 					if float(data["tool1Target"]) > 0:
-						self._printer.commands("M109 T1 S{}".format(float(data["tool1Target"])))
+						self._printer.commands(f"M109 T1 S{float(data['tool1Target'])}")
 
-				if "T" not in data["position"].keys():
-					data["position"]["T"] = 0
-
+				# Handle FAN value
 				if "FAN" in data["position"].keys():
-					if int(data["position"]["FAN"]) > 0:
-						self._printer.commands("M106 S{}".format(float(data["position"]["FAN"])))
+					fan_value = int(float(data["position"]["FAN"]))
+					self._printer.commands(f"M106 S{fan_value}")
 
+				# Handle IDEX-specific commands
 				if "IDEX" in data.keys():
-					self.IDEX_enabled = True		  #set it again to save in in subsequent saves of this file
-					self.state_IDEX = data["IDEX"]    #set it again to save in in subsequent saves of this file
+					self.IDEX_enabled = True  # Set it again to save in subsequent saves of this file
+					self.state_IDEX = data["IDEX"]  # Set it again to save in subsequent saves of this file
 					if data["IDEX"] == 1 or data["IDEX"] == 0:
-						commands = ["M605 S1",
-									"T{}".format(int(data["position"]["T"])),
-									"PURGE_POSITION",
-									"G1 Z{} F4000".format(float(data["position"]["Z"]) + 2),
-									"G91",
-									"G1 F400 E10",
-									"G1 E-0.5 F600"
-									"G90",
-									"CLEAN_NOZZLE",
-									"M420 S1",
-									"G1 X{} Y{} F5000".format(float(data["position"]["X"]),
-															  float(data["position"]["Y"])),
-									"G1 Z{} F4000".format(float(data["position"]["Z"])),
-									"G91",
-									"G1 E0.5 F200",
-									"G90",
-									"G92 E{}".format(float(data["position"]["E"])),
-									"G1 F{}".format(float(data["position"]["F"]))
-									]
+						commands = [
+							"M605 S1",
+							f"T{int(data['position']['T'])}",
+							"PURGE_POSITION",
+							f"G1 Z{float(data['position']['Z']) + 2} F4000",
+							"G91",
+							"G1 F400 E10",
+							"G1 E-0.5 F600",
+							"G90",
+							"CLEAN_NOZZLE",
+							"M420 S1",
+							f"G1 X{float(data['position']['X'])} Y{float(data['position']['Y'])} F5000",
+							f"G1 Z{float(data['position']['Z'])} F4000",
+							"G91",
+							"G1 E0.5 F200",
+							"G90",
+							f"G92 E{float(data['position']['E'])}",
+							f"G1 F{float(data['position']['F'])}"
+						]
 					else:
-						commands = ["M605 S3",
-									"PURGE_POSITION",
-									"G1 Z{} F4000".format(float(data["position"]["Z"]) + 2),
-									"G91",
-									"G1 F400 E10",
-									"G1 E-0.5 F600",
-									"G90",
-									"CLEAN_NOZZLE",
-									"M420 S1",
-									"M605 S{}".format(int(data["IDEX"])),
-									"G90",
-									"G1 X{} Y{} F5000".format(float(data["position"]["X"]),
-															  float(data["position"]["Y"])),
-									"G1 Z{} F4000".format(float(data["position"]["Z"])),
-									"G91",
-									"G1 E0.5 F200",
-									"G90",
-									"G92 E{}".format(float(data["position"]["E"])),
-									"G1 F{}".format(float(data["position"]["F"]))
-									]
+						commands = [
+							"M605 S3",
+							"PURGE_POSITION",
+							f"G1 Z{float(data['position']['Z']) + 2} F4000",
+							"G91",
+							"G1 F400 E10",
+							"G1 E-0.5 F600",
+							"G90",
+							"CLEAN_NOZZLE",
+							"M420 S1",
+							f"M605 S{int(data['IDEX'])}",
+							"G90",
+							f"G1 X{float(data['position']['X'])} Y{float(data['position']['Y'])} F5000",
+							f"G1 Z{float(data['position']['Z'])} F4000",
+							"G91",
+							"G1 E0.5 F200",
+							"G90",
+							f"G92 E{float(data['position']['E'])}",
+							f"G1 F{float(data['position']['F'])}"
+						]
 				else:
-					commands = ["T{}".format(int(data["position"]["T"])),
-								"PURGE_POSITION",
-								"G1 Z{} F4000".format(float(data["position"]["Z"]) + 2),
-								"G91",
-								"G1 F400 E5",
-								"G1 E-0.5 F600",
-								"G90",
-								"CLEAN_NOZZLE",
-								"M420 S1",
-								"G1 X{} Y{} F9000".format(float(data["position"]["X"]),
-														  float(data["position"]["Y"])),
-								"G1 Z{} F4000".format(float(data["position"]["Z"])),
-								"G91",
-								"G1 E0.5 F400",
-								"G90",
-								"G92 E{}".format(float(data["position"]["E"])),
-								"G1 F{}".format(float(data["position"]["F"]))
-								]
+					# Commands for single-nozzle printers
+					commands = [
+						f"T{int(data['position'].get('T', 0))}",
+						"PURGE_POSITION",
+						f"G1 Z{float(data['position']['Z']) + 2} F4000",
+						"G91",
+						"G1 F400 E5",
+						"G1 E-0.5 F600",
+						"G90",
+						"CLEAN_NOZZLE",
+						"M420 S1",
+						f"G1 X{float(data['position']['X'])} Y{float(data['position']['Y'])} F9000",
+						f"G1 Z{float(data['position']['Z'])} F4000",
+						"G91",
+						"G1 E0.5 F400",
+						"G90",
+						f"G92 E{float(data['position']['E'])}",
+						f"G1 F{float(data['position']['F'])}"
+					]
 
 				self._printer.commands(commands)
 
-				if "babystep" in data.keys():
-					if float(data["babystep"]) != 0:
-						self._printer.commands("M290 Z{}".format(float(data["babystep"])))
-						self.state_babystep = float(data["babystep"])
+				# Handle babystep
+				if "babystep" in data.keys() and float(data["babystep"]) != 0:
+					self._printer.commands(f"M290 Z{float(data['babystep'])}")
+					self.state_babystep = float(data["babystep"])
 
-				self._printer.select_file(path=self._file_manager.path_on_disk("local", data["fileName"]),
-										  sd=False, printAfterSelect=True, pos=int(data["filePos"]))
+				# Select file and resume print
+				self._printer.select_file(
+					path=self._file_manager.path_on_disk("local", data["fileName"]),
+					sd=False,
+					printAfterSelect=True,
+					pos=int(data["filePos"])
+				)
 				self.file_restored = data["fileName"]
 
 				self._printer.commands("M117 RESTORE_COMPLETE")
 
-				self._send_status(status_type="PRINT_RESURRECTION_STARTED", status_value=data["fileName"],
-								  status_description="Print resurrection started")
+				self._send_status(
+					status_type="PRINT_RESURRECTION_STARTED",
+					status_value=data["fileName"],
+					status_description="Print resurrection started"
+				)
 				return (True, None)
 			else:  # file name is None
 				self._logger.error("Did not find print job filename in restore file\n" + json.dumps(data))
