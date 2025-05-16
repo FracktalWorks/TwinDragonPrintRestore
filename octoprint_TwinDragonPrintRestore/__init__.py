@@ -319,10 +319,12 @@ class TwinDragonPrintRestore(octoprint.plugin.StartupPlugin,
 					if float(data["tool1Target"]) > 0:
 						self._printer.commands(
 							"M109 T1 S150")  # just enough heat to remove nozzle without disloging print
+						
 				# Move the print head
-				self._printer.commands("T0")
 				self._printer.home("z")
 				self._printer.home(["x", "y"])
+				self._printer.commands("T0")
+
 
 				# Set to actual heating temperatures
 
