@@ -19,7 +19,7 @@ plugin_version = versioneer.get_version()   # replaced by versioneer
 
 # The plugin's description. Can be overwritten within OctoPrint's internal data via __plugin_description__ in the plugin
 # module
-plugin_description = """Print Restore plugin for Julia 2018 series"""
+plugin_description = """Print Restore plugin for Twin Dragon series"""
 
 # The plugin's author. Can be overwritten within OctoPrint's internal data via __plugin_author__ in the plugin module
 plugin_author = "Vijay Raghav Varada"
