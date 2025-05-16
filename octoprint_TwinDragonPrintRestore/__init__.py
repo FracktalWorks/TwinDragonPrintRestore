@@ -698,7 +698,7 @@ class TwinDragonPrintRestore(octoprint.plugin.StartupPlugin,
 		"""Plugin configuration for software update."""
 		return dict(
 			TwinDragonPrintRestore=dict(
-				displayName="Julia Print Restore",
+				displayName="TwinDragon Print Restore",
 				displayVersion=self._plugin_version,
 				# version check: github repository
 				type="github_release",
