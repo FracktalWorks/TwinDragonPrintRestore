@@ -416,10 +416,10 @@ class TwinDragonPrintRestore(octoprint.plugin.StartupPlugin,
 
 				self._printer.commands(commands)
 
-				if "babystep" in data.keys():
-					if float(data["babystep"]) != 0:
-						self._printer.commands("M290 Z{}".format(float(data["babystep"])))
-						self.state_babystep = float(data["babystep"])
+				# if "babystep" in data.keys():
+				# 	if float(data["babystep"]) != 0:
+				# 		self._printer.commands("M290 Z{}".format(float(data["babystep"])))
+				# 		self.state_babystep = float(data["babystep"])
 
 				self._printer.select_file(path=self._file_manager.path_on_disk("local", data["fileName"]),
 										  sd=False, printAfterSelect=True, pos=int(data["filePos"]))
